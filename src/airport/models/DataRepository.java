@@ -191,13 +191,14 @@ public class DataRepository {
             for (int i = 0; i < flightsArray.length(); i++) {
                 JSONObject flightJson = flightsArray.getJSONObject(i);
                 String id = flightJson.getString("id");
-                String planeId = flightJson.getString("planeId");
-                String departureLocationId = flightJson.getString("departureLocationId");
-                String arrivalLocationId = flightJson.getString("arrivalLocationId");
-                String scaleLocationId = flightJson.optString("scaleLocationId", null); // Optional
+                String planeId = flightJson.getString("plane");
+                String departureLocationId = flightJson.getString("departureLocation");
+                String arrivalLocationId = flightJson.getString("arrivalLocation");
+                String scaleLocationId = flightJson.optString("scaleLocation", null); // Optional
                 LocalDateTime departureDate = LocalDateTime.parse(flightJson.getString("departureDate"));
                 int hoursDurationArrival = flightJson.getInt("hoursDurationArrival");
                 int minutesDurationArrival = flightJson.getInt("minutesDurationArrival");
+
                 
                 Plane plane = findPlaneById(planeId);
                 Location departureLocation = findLocationById(departureLocationId);

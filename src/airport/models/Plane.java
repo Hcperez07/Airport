@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package airport;
+package airport.models;
 
 import java.util.ArrayList;
 
@@ -10,7 +10,7 @@ import java.util.ArrayList;
  *
  * @author edangulo
  */
-public class Plane {
+public class Plane implements Cloneable{
     
     private final String id;
     private String brand;
@@ -58,6 +58,13 @@ public class Plane {
     
     public int getNumFlights() {
         return flights.size();
+    }
+    
+    @Override
+    public Plane clone() throws CloneNotSupportedException {
+        // Llamada a super.clone(), que realiza una copia superficial.
+        // Si tienes atributos que son objetos mutables, haz una copia profunda de ellos aquí.
+        return (Plane) super.clone();
     }
     
 }

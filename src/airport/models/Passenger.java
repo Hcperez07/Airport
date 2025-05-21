@@ -2,7 +2,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
-package airport;
+package airport.models;
 
 import java.time.LocalDate;
 import java.time.Period;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
  *
  * @author edangulo
  */
-public class Passenger {
+public class Passenger implements Cloneable{
     
     private final long id;
     private String firstname;
@@ -110,4 +110,8 @@ public class Passenger {
         return flights.size();
     }
     
+    @Override
+    public Passenger clone() throws CloneNotSupportedException {
+        return (Passenger) super.clone();
+    }
 }

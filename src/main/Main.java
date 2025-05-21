@@ -11,7 +11,7 @@ package main;
 import com.formdev.flatlaf.FlatDarkLaf;
 import javax.swing.UIManager;
 
-import airport.AirportFrame;
+import airport.views.AirportFrame;
 
 public class Main {
     

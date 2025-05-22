@@ -33,13 +33,16 @@ public class LocationController {
     public Response createLocation(String id, String name, String city, String country, 
                                    String latitudeStr, String longitudeStr) {
         // Validate ID
-        if (id == null || id.length() != 3) {
-            return new Response(Status.BAD_REQUEST, "Bad Request: Location ID must be 3 characters.", null);
+        if (id == null) { // Must not be null
+            return new Response(Status.BAD_REQUEST, "Bad Request: Location ID must be 3 characters long.", null);
         }
-        if (!id.matches("[A-Z]{3}")) {
-            return new Response(Status.BAD_REQUEST, "Bad Request: Location ID must be 3 uppercase letters.", null);
+        if (id.length() != 3) { // Must be strictly 3 characters long
+            return new Response(Status.BAD_REQUEST, "Bad Request: Location ID must be 3 characters long.", null);
         }
-        if (dataRepository.findLocationById(id) != null) {
+        if (!id.matches("[A-Z]{3}")) { // Must consist of 3 uppercase letters
+            return new Response(Status.BAD_REQUEST, "Bad Request: Location ID must consist of 3 uppercase letters.", null);
+        }
+        if (dataRepository.findLocationById(id) != null) { // Must be unique
             return new Response(Status.CONFLICT, "Conflict: Location ID already exists.", null);
         }
 
@@ -52,24 +55,36 @@ public class LocationController {
 
         // Validate latitude
         double latitude;
+         if (latitudeStr == null || latitudeStr.trim().isEmpty()) { // Check for null or empty before parsing
+            return new Response(Status.BAD_REQUEST, "Bad Request: Invalid latitude format.", null);
+        }
         try {
             latitude = Double.parseDouble(latitudeStr);
-            if (latitude < -90 || latitude > 90 || !hasMaxFourDecimalPlaces(latitudeStr)) {
-                return new Response(Status.BAD_REQUEST, "Bad Request: Invalid latitude.", null);
-            }
         } catch (NumberFormatException e) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Invalid latitude format.", null);
+        }
+        if (latitude < -90 || latitude > 90) {
+            return new Response(Status.BAD_REQUEST, "Bad Request: Latitude must be between -90 and 90.", null);
+        }
+        if (!hasMaxFourDecimalPlaces(latitudeStr)) {
+            return new Response(Status.BAD_REQUEST, "Bad Request: Latitude must have at most 4 decimal places.", null);
         }
 
         // Validate longitude
         double longitude;
+        if (longitudeStr == null || longitudeStr.trim().isEmpty()) { // Check for null or empty before parsing
+            return new Response(Status.BAD_REQUEST, "Bad Request: Invalid longitude format.", null);
+        }
         try {
             longitude = Double.parseDouble(longitudeStr);
-            if (longitude < -180 || longitude > 180 || !hasMaxFourDecimalPlaces(longitudeStr)) {
-                return new Response(Status.BAD_REQUEST, "Bad Request: Invalid longitude.", null);
-            }
         } catch (NumberFormatException e) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Invalid longitude format.", null);
+        }
+        if (longitude < -180 || longitude > 180) {
+            return new Response(Status.BAD_REQUEST, "Bad Request: Longitude must be between -180 and 180.", null);
+        }
+        if (!hasMaxFourDecimalPlaces(longitudeStr)) {
+            return new Response(Status.BAD_REQUEST, "Bad Request: Longitude must have at most 4 decimal places.", null);
         }
 
         // Create and add location
@@ -80,7 +95,8 @@ public class LocationController {
             return new Response(Status.CREATED, "Location created successfully.", newLocation.clone());
         } catch (CloneNotSupportedException e) {
             System.err.println("Error cloning location: " + e.getMessage());
-            return new Response(Status.CREATED, "Location created successfully (cloning failed).", newLocation);
+            // Spec: "If cloning fails, return Status.INTERNAL_SERVER_ERROR with the original (uncloned) Location object as data and an error message indicating the cloning failure."
+            return new Response(Status.INTERNAL_SERVER_ERROR, "Location created but failed to clone: " + e.getMessage(), newLocation);
         }
     }
 
@@ -93,10 +109,10 @@ public class LocationController {
             try {
                 clonedLocations.add((Location) loc.clone());
             } catch (CloneNotSupportedException e) {
-                System.err.println("Error cloning location in getAllLocationsOrderedById: " + e.getMessage());
-                clonedLocations.add(loc); // Add original if cloning fails
+                System.err.println("Error cloning location in getAllLocationsOrderedById: " + e.getMessage() + " for location ID: " + loc.getAirportId());
+                clonedLocations.add(loc); // Add original if cloning fails, as per current logic and interpretation for list methods.
             }
         }
-        return new Response(Status.OK, "Locations retrieved successfully.", clonedLocations);
+        return new Response(Status.OK, "Locations retrieved successfully.", clonedLocations); // Matches spec
     }
 }

@@ -1,7 +1,3 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package airport.controllers;
 
 import airport.controllers.utils.Response;
@@ -21,7 +17,10 @@ public class PlaneController {
 
     public Response createPlane(String id, String brand, String model, String maxCapacityStr, String airline) {
         // Validate ID format
-        if (id == null || !id.matches("[A-Z]{2}[0-9]{5}")) {
+        if (id == null || id.trim().isEmpty()) { // Added null or empty check for ID itself
+            return new Response(Status.BAD_REQUEST, "Bad Request: Plane ID must follow the format XXYYYYY (2 uppercase letters, 5 digits).", null);
+        }
+        if (!id.matches("[A-Z]{2}[0-9]{5}")) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Plane ID must follow the format XXYYYYY (2 uppercase letters, 5 digits).", null);
         }
         // Validate ID uniqueness
@@ -38,10 +37,14 @@ public class PlaneController {
 
         // Validate maxCapacity
         int maxCapacity;
+        if (maxCapacityStr == null || maxCapacityStr.trim().isEmpty()) { // Added null or empty check for maxCapacityStr
+             return new Response(Status.BAD_REQUEST, "Bad Request: Invalid max capacity format.", null);
+        }
         try {
             maxCapacity = Integer.parseInt(maxCapacityStr);
             if (maxCapacity <= 0) {
-                return new Response(Status.BAD_REQUEST, "Bad Request: Invalid max capacity.", null);
+                // Spec: "Max capacity must be greater than 0."
+                return new Response(Status.BAD_REQUEST, "Bad Request: Max capacity must be greater than 0.", null);
             }
         } catch (NumberFormatException e) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Invalid max capacity format.", null);
@@ -55,7 +58,8 @@ public class PlaneController {
             return new Response(Status.CREATED, "Plane created successfully.", newPlane.clone());
         } catch (CloneNotSupportedException e) {
             System.err.println("Error cloning plane: " + e.getMessage());
-            return new Response(Status.CREATED, "Plane created successfully (cloning failed).", newPlane);
+            // Spec: "If cloning fails, return Status.INTERNAL_SERVER_ERROR with the original (uncloned) plane object as data and an error message indicating the cloning failure."
+            return new Response(Status.INTERNAL_SERVER_ERROR, "Plane created but failed to clone: " + e.getMessage(), newPlane);
         }
     }
 
@@ -68,11 +72,10 @@ public class PlaneController {
             try {
                 clonedPlanes.add((Plane) p.clone());
             } catch (CloneNotSupportedException e) {
-                System.err.println("Error cloning plane in getAllPlanesOrderedById: " + e.getMessage());
-                clonedPlanes.add(p); // Add original if cloning fails
+                System.err.println("Error cloning plane in getAllPlanesOrderedById: " + e.getMessage() + " for plane ID: " + p.getId());
+                clonedPlanes.add(p); // Add original if cloning fails, as per existing logic and interpretation for list methods
             }
         }
-        return new Response(Status.OK, "Planes retrieved successfully.", clonedPlanes);
+        return new Response(Status.OK, "Planes retrieved successfully.", clonedPlanes); // Matches spec
     }
 }
-

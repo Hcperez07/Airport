@@ -16,7 +16,7 @@ public class LocationController {
     private DataRepository dataRepository;
 
     public LocationController() {
-        this.dataRepository = new DataRepository();
+        this.dataRepository = DataRepository.getInstance();
     }
 
     private boolean hasMaxFourDecimalPlaces(String numberStr) {

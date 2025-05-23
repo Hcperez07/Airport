@@ -15,12 +15,13 @@ import org.json.JSONException;
 
 public class DataRepository {
 
+    private static final DataRepository instance = new DataRepository();
     private ArrayList<Passenger> passengers = new ArrayList<>();
     private ArrayList<Plane> planes = new ArrayList<>();
     private ArrayList<Location> locations = new ArrayList<>();
     private ArrayList<Flight> flights = new ArrayList<>();
 
-    public DataRepository() {
+    private DataRepository() {
         loadPassengers();
         loadPlanes();
         loadLocations();
@@ -228,5 +229,9 @@ public class DataRepository {
         } catch (JSONException e) {
             System.err.println("Error parsing flights.json: " + e.getMessage());
         }
+    }
+
+    public static DataRepository getInstance() {
+        return instance;
     }
 }

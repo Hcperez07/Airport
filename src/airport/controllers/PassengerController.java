@@ -19,12 +19,12 @@ public class PassengerController {
     private DataRepository dataRepository;
 
     public PassengerController() {
-        this.dataRepository = new DataRepository();
+        this.dataRepository = DataRepository.getInstance();
     }
 
     public Response registerPassenger(String idStr, String firstname, String lastname,
-                                      String birthYearStr, String birthMonthStr, String birthDayStr,
-                                      String phoneCodeStr, String phoneStr, String country) {
+            String birthYearStr, String birthMonthStr, String birthDayStr,
+            String phoneCodeStr, String phoneStr, String country) {
         // Validate ID
         long id;
         if (idStr == null || idStr.trim().isEmpty()) {
@@ -46,9 +46,9 @@ public class PassengerController {
         }
 
         // Validate names and country
-        if (firstname == null || firstname.trim().isEmpty() ||
-            lastname == null || lastname.trim().isEmpty() ||
-            country == null || country.trim().isEmpty()) {
+        if (firstname == null || firstname.trim().isEmpty()
+                || lastname == null || lastname.trim().isEmpty()
+                || country == null || country.trim().isEmpty()) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Firstname, lastname, and country cannot be empty.", null);
         }
 
@@ -56,9 +56,9 @@ public class PassengerController {
         LocalDate birthDate;
         int birthYear, birthMonth, birthDay;
         try {
-            if (birthYearStr == null || birthYearStr.trim().isEmpty() ||
-                birthMonthStr == null || birthMonthStr.trim().isEmpty() || "Month".equals(birthMonthStr) ||
-                birthDayStr == null || birthDayStr.trim().isEmpty() || "Day".equals(birthDayStr) ) {
+            if (birthYearStr == null || birthYearStr.trim().isEmpty()
+                    || birthMonthStr == null || birthMonthStr.trim().isEmpty() || "Month".equals(birthMonthStr)
+                    || birthDayStr == null || birthDayStr.trim().isEmpty() || "Day".equals(birthDayStr)) {
                 return new Response(Status.BAD_REQUEST, "Bad Request: Birth year, month, and day must be specified.", null);
             }
             birthYear = Integer.parseInt(birthYearStr);
@@ -74,7 +74,7 @@ public class PassengerController {
         // Validate phoneCode
         int phoneCode;
         if (phoneCodeStr == null || phoneCodeStr.trim().isEmpty()) {
-             return new Response(Status.BAD_REQUEST, "Bad Request: Phone code cannot be empty.", null);
+            return new Response(Status.BAD_REQUEST, "Bad Request: Phone code cannot be empty.", null);
         }
         try {
             phoneCode = Integer.parseInt(phoneCodeStr);
@@ -87,7 +87,7 @@ public class PassengerController {
         if (phoneCodeStr.length() > 3) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Phone code must have at most 3 digits.", null);
         }
-        
+
         // Validate phone
         long phone;
         if (phoneStr == null || phoneStr.trim().isEmpty()) {
@@ -102,7 +102,7 @@ public class PassengerController {
             return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must be non-negative.", null);
         }
         if (phoneStr.length() > 11) {
-             return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must have at most 11 digits.", null);
+            return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must have at most 11 digits.", null);
         }
 
         // Create and add passenger
@@ -127,27 +127,27 @@ public class PassengerController {
             try {
                 clonedPassengers.add((Passenger) p.clone());
             } catch (CloneNotSupportedException e) {
-                 System.err.println("Error cloning passenger in getAllPassengersOrderedById: " + e.getMessage() + " for passenger ID: " + p.getId());
-                 // As per spec, method should return successfully retrieved passengers (cloned if possible).
-                 // If a single clone fails, we can log and add the original, or skip, or return an error for the whole operation.
-                 // Given the context, logging and adding the original (or a marker/null) might be acceptable if the goal is to show as much data as possible.
-                 // However, for consistency with other methods that demand cloning, if any clone fails, it might be better to signal an issue.
-                 // For this exercise, I'll stick to the provided logic which adds the original on failure and logs.
-                 // A more robust solution might involve a partial success or a specific error status.
-                 clonedPassengers.add(p); 
+                System.err.println("Error cloning passenger in getAllPassengersOrderedById: " + e.getMessage() + " for passenger ID: " + p.getId());
+                // As per spec, method should return successfully retrieved passengers (cloned if possible).
+                // If a single clone fails, we can log and add the original, or skip, or return an error for the whole operation.
+                // Given the context, logging and adding the original (or a marker/null) might be acceptable if the goal is to show as much data as possible.
+                // However, for consistency with other methods that demand cloning, if any clone fails, it might be better to signal an issue.
+                // For this exercise, I'll stick to the provided logic which adds the original on failure and logs.
+                // A more robust solution might involve a partial success or a specific error status.
+                clonedPassengers.add(p);
             }
         }
         return new Response(Status.OK, "Passengers retrieved successfully.", clonedPassengers);
     }
 
     public Response updatePassengerInfo(long passengerId, String firstname, String lastname,
-                                        String birthYearStr, String birthMonthStr, String birthDayStr,
-                                        String phoneCodeStr, String phoneStr, String country) {
+            String birthYearStr, String birthMonthStr, String birthDayStr,
+            String phoneCodeStr, String phoneStr, String country) {
         Passenger passenger = dataRepository.findPassengerById(passengerId);
         if (passenger == null) {
             return new Response(Status.NOT_FOUND, "Passenger with ID " + passengerId + " not found.", null);
         }
-        
+
         // ID specific validations (non-negative, length) are for the passengerId parameter.
         if (passengerId < 0) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Passenger ID must be non-negative.", null);
@@ -157,9 +157,9 @@ public class PassengerController {
         }
 
         // Validate names and country
-        if (firstname == null || firstname.trim().isEmpty() ||
-            lastname == null || lastname.trim().isEmpty() ||
-            country == null || country.trim().isEmpty()) {
+        if (firstname == null || firstname.trim().isEmpty()
+                || lastname == null || lastname.trim().isEmpty()
+                || country == null || country.trim().isEmpty()) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Firstname, lastname, and country cannot be empty.", null);
         }
 
@@ -167,9 +167,9 @@ public class PassengerController {
         LocalDate birthDate;
         int birthYear, birthMonth, birthDay;
         try {
-             if (birthYearStr == null || birthYearStr.trim().isEmpty() ||
-                birthMonthStr == null || birthMonthStr.trim().isEmpty() || "Month".equals(birthMonthStr) ||
-                birthDayStr == null || birthDayStr.trim().isEmpty() || "Day".equals(birthDayStr) ) {
+            if (birthYearStr == null || birthYearStr.trim().isEmpty()
+                    || birthMonthStr == null || birthMonthStr.trim().isEmpty() || "Month".equals(birthMonthStr)
+                    || birthDayStr == null || birthDayStr.trim().isEmpty() || "Day".equals(birthDayStr)) {
                 return new Response(Status.BAD_REQUEST, "Bad Request: Birth year, month, and day must be specified.", null);
             }
             birthYear = Integer.parseInt(birthYearStr);
@@ -185,7 +185,7 @@ public class PassengerController {
         // Validate phoneCode
         int phoneCode;
         if (phoneCodeStr == null || phoneCodeStr.trim().isEmpty()) {
-             return new Response(Status.BAD_REQUEST, "Bad Request: Phone code cannot be empty.", null);
+            return new Response(Status.BAD_REQUEST, "Bad Request: Phone code cannot be empty.", null);
         }
         try {
             phoneCode = Integer.parseInt(phoneCodeStr);
@@ -201,7 +201,7 @@ public class PassengerController {
 
         // Validate phone
         long phone;
-         if (phoneStr == null || phoneStr.trim().isEmpty()) {
+        if (phoneStr == null || phoneStr.trim().isEmpty()) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Phone number cannot be empty.", null);
         }
         try {
@@ -213,7 +213,7 @@ public class PassengerController {
             return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must be non-negative.", null);
         }
         if (phoneStr.length() > 11) {
-             return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must have at most 11 digits.", null);
+            return new Response(Status.BAD_REQUEST, "Bad Request: Phone number must have at most 11 digits.", null);
         }
 
         // Update passenger
@@ -242,7 +242,11 @@ public class PassengerController {
         if (flight == null) {
             return new Response(Status.NOT_FOUND, "Flight not found.", null); // Matches spec
         }
-        
+
+        if (passenger.getFlights().contains(flight)) {
+            return new Response(Status.BAD_REQUEST, "Passenger is already in this flight.", null);
+        }
+
         passenger.addFlight(flight);
         flight.addPassenger(passenger);
 
@@ -263,4 +267,3 @@ public class PassengerController {
         }
     }
 }
-

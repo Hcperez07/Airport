@@ -12,7 +12,7 @@ public class PlaneController {
     private DataRepository dataRepository;
 
     public PlaneController() {
-        this.dataRepository = new DataRepository();
+        this.dataRepository = DataRepository.getInstance();
     }
 
     public Response createPlane(String id, String brand, String model, String maxCapacityStr, String airline) {

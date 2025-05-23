@@ -17,7 +17,7 @@ public class FlightController {
     private DataRepository dataRepository;
 
     public FlightController() {
-        this.dataRepository = new DataRepository();
+        this.dataRepository = DataRepository.getInstance();
     }
 
     public Response createFlight(String id, String planeId, String departureLocationId, String arrivalLocationId,

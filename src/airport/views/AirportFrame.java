@@ -13,6 +13,9 @@ import airport.models.Flight;
 import airport.models.Location;
 import airport.models.Passenger;
 import airport.models.Plane;
+import airport.views.RoleTabPolicy;
+import airport.views.AdministratorTabPolicy;
+import airport.views.UserTabPolicy;
 import java.awt.Color;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +42,10 @@ public class AirportFrame extends javax.swing.JFrame {
     private PlaneController planeController;
     private LocationController locationController;
     private FlightController flightController;
+    
+    // Policies for tab visibility
+    private RoleTabPolicy adminPolicy = new AdministratorTabPolicy();
+    private RoleTabPolicy userPolicy = new UserTabPolicy();
 
     public AirportFrame() {
         initComponents();
@@ -1512,76 +1519,107 @@ public class AirportFrame extends javax.swing.JFrame {
     private void panelRound2MouseDragged(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_panelRound2MouseDragged
         this.setLocation(this.getLocation().x + evt.getX() - x, this.getLocation().y + evt.getY() - y);
     }//GEN-LAST:event_panelRound2MouseDragged
-
-    private void administratorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_administratorActionPerformed
+    
+    private void setAdminRoleUIState() {
         if (user.isSelected()) {
             user.setSelected(false);
         }
         userSelect.setEnabled(false);
         userSelect.setSelectedIndex(0);
+    }
 
-        // Administrator Role:
-        // Enabled tabs: Passenger reg (1), Airplane reg (2), Location reg (3), Flight reg (4),
-        // Show all passengers (8), Show all flights (9), Show all planes (10), Show all locations (11), Delay flight (12).
-        // Disabled tabs: Update info (5), Add to flight (6), Show my flights (7).
-        int[] adminEnabledTabs = {1, 2, 3, 4, 8, 9, 10, 11, 12};
-        int[] adminDisabledTabs = {5, 6, 7};
+    /**
+     * Manages tab access for the Administrator role using the AdministratorTabPolicy.
+     */
+    private void manageAdminTabAccess() {
+        adminPolicy.applyTabVisibility(jTabbedPane1, this);
+    }
 
-        for (int index : adminEnabledTabs) {
-            if (index < jTabbedPane1.getTabCount()) {
-                jTabbedPane1.setEnabledAt(index, true);
-            }
+    /**
+     * Refreshes data views relevant to the administrator.
+     * This includes refreshing tables for all passengers, flights, planes, and locations.
+     */
+    private void refreshAdminViewData() {
+        refreshAllPassengersButtonActionPerformed(null);
+        refreshAllFlightsButtonActionPerformed(null);
+        refreshAllPlanesButtonActionPerformed(null);
+        refreshAllLocationsButtonActionPerformed(null);
+    }
+
+    /**
+     * Clears data fields that are specific to a user selection.
+     * This includes clearing the 'My Flights' table and the fields in the 'Update Info' tab.
+     */
+    private void clearUserSpecificDataFields() {
+        DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
+        if (myFlightsModel != null) {
+            myFlightsModel.setRowCount(0);
         }
-        for (int index : adminDisabledTabs) {
-            if (index < jTabbedPane1.getTabCount()) {
-                jTabbedPane1.setEnabledAt(index, false);
-            }
-        }
+        clearUpdateInfoFields();
+    }
+    
+    private void administratorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_administratorActionPerformed
+        setAdminRoleUIState();
+        manageAdminTabAccess(); // This will be modified later for OCP
 
         if (evt != null) {
-            refreshAllPassengersButtonActionPerformed(null);
-            refreshAllFlightsButtonActionPerformed(null);
-            refreshAllPlanesButtonActionPerformed(null);
-            refreshAllLocationsButtonActionPerformed(null);
-            DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
-            if (myFlightsModel != null) {
-                myFlightsModel.setRowCount(0);
-            }
-            clearUpdateInfoFields();
+            refreshAdminViewData();
+            clearUserSpecificDataFields();
         }
 
     }//GEN-LAST:event_administratorActionPerformed
 
-    private void userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userActionPerformed
+    
+     /** Sets the UI state specific to the user role.
+     * This includes enabling the user selection combo box and ensuring the administrator radio button is deselected.
+     */
+    private void setUserRoleUIState() {
+        if (administrator.isSelected()) {
+            administrator.setSelected(false);
+        }
         userSelect.setEnabled(true);
+    }
 
-        // User Role:
-        // Enabled tabs: Update info (5), Add to flight (6), Show my flights (7), 
-        // Show all flights (9), Show all locations (11).
-        // Disabled tabs: All others (1, 2, 3, 4, 8, 10, 12).
-        int[] userEnabledTabs = {5, 6, 7, 9, 11};
-        // All other operational tabs (1-4, 8, 10, 12) should be disabled
-        for (int i = 1; i < jTabbedPane1.getTabCount(); i++) {
-            jTabbedPane1.setEnabledAt(i, false); // Disable all first
-        }
-        for (int index : userEnabledTabs) {
-            if (index < jTabbedPane1.getTabCount()) {
-                jTabbedPane1.setEnabledAt(index, true);
+    /**
+     * Manages tab access for the User role using the UserTabPolicy.
+     */
+    private void manageUserTabAccess() {
+        userPolicy.applyTabVisibility(jTabbedPane1, this);
+    }
+
+    /**
+     * Refreshes data views relevant to the user.
+     * This includes refreshing tables for all flights and locations.
+     */
+    private void refreshUserViewData() {
+        refreshAllFlightsButtonActionPerformed(null);
+        refreshAllLocationsButtonActionPerformed(null);
+    }
+
+    /**
+     * Handles changes in the user selection combo box.
+     * Populates or clears user-specific fields based on the selection.
+     */
+    private void handleUserSelectionChange() {
+        if (userSelect.getSelectedIndex() > 0) {
+            userSelectActionPerformed(null); // This populates user-specific fields like updateInfoPassengerIdTextField and addToFlightPassengerIdTextField
+        } else {
+            // If "Select User" is chosen, or no user is selected, clear relevant fields.
+            DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
+            if (myFlightsModel != null) {
+                myFlightsModel.setRowCount(0); // Clear "My Flights" table
             }
+            clearUpdateInfoFields(); // Clear fields in "Update Info" and "Add to Flight" passenger ID
         }
+    }
+    
+    private void userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userActionPerformed
+        setUserRoleUIState();
+        manageUserTabAccess(); // This will be modified later for OCP
 
         if (evt != null) {
-            if (userSelect.getSelectedIndex() > 0) {
-                userSelectActionPerformed(null);
-            } else {
-                DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
-                if (myFlightsModel != null) {
-                    myFlightsModel.setRowCount(0);
-                }
-                clearUpdateInfoFields();
-            }
-            refreshAllFlightsButtonActionPerformed(null);
-            refreshAllLocationsButtonActionPerformed(null);
+            handleUserSelectionChange();
+            refreshUserViewData();
         }
     }//GEN-LAST:event_userActionPerformed
 

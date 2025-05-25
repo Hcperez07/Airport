@@ -9,7 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class FileUtils {
-
+    //Lector de archivos
     public static String readFileToString(String filePath) {
         StringBuilder contentBuilder = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -19,7 +19,7 @@ public class FileUtils {
             }
         } catch (IOException e) {
             System.err.println("Error reading file " + filePath + ": " + e.getMessage());
-            return null; // Or throw a custom exception
+            return null; 
         }
         return contentBuilder.toString();
     }

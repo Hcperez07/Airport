@@ -1,25 +1,26 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+/* Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package airport.models;
 
 import airport.controllers.utils.FileUtils;
+import airport.views.Observer; 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
+import java.util.ArrayList; 
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
 
 
-public class DataRepository {
+public class DataRepository implements Subject { 
 
     private static final DataRepository instance = new DataRepository();
     private ArrayList<Passenger> passengers = new ArrayList<>();
     private ArrayList<Plane> planes = new ArrayList<>();
     private ArrayList<Location> locations = new ArrayList<>();
     private ArrayList<Flight> flights = new ArrayList<>();
+    private ArrayList<Observer> observers = new ArrayList<>(); // Add this line
 
     private DataRepository() {
         loadPassengers();
@@ -74,9 +75,8 @@ public class DataRepository {
     public void addPassenger(Passenger passenger) {
         if (passenger != null && findPassengerById(passenger.getId()) == null) {
             this.passengers.add(passenger);
+            notifyObservers(); 
         }
-        // Optionally, handle the case where passenger is null or ID already exists,
-        // though the controller should validate this.
     }
     
     public Flight findFlightById(String id) {
@@ -91,25 +91,22 @@ public class DataRepository {
     public void addLocation(Location location) {
         if (location != null && findLocationById(location.getAirportId()) == null) {
             this.locations.add(location);
+            notifyObservers(); 
         }
-        // Optionally, handle the case where location is null or ID already exists,
-        // though the controller should validate this.
     }
 
     public void addPlane(Plane plane) {
         if (plane != null && findPlaneById(plane.getId()) == null) {
             this.planes.add(plane);
+            notifyObservers(); 
         }
-        // Optionally, handle the case where plane is null or ID already exists,
-        // though the controller should validate this.
     }
 
     public void addFlight(Flight flight) {
         if (flight != null && findFlightById(flight.getId()) == null) {
             this.flights.add(flight);
+            notifyObservers(); 
         }
-        // Optionally, handle the case where flight is null or ID already exists,
-        // though the controller should validate this.
     }
 
     private void loadPassengers() {
@@ -133,6 +130,25 @@ public class DataRepository {
             }
         } catch (JSONException e) {
             System.err.println("Error parsing passengers.json: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public void registerObserver(Observer o) {
+        if (o != null && !observers.contains(o)) {
+            observers.add(o);
+        }
+    }
+
+    @Override
+    public void removeObserver(Observer o) {
+        observers.remove(o);
+    }
+
+    @Override
+    public void notifyObservers() {
+        for (Observer observer : observers) {
+            observer.update();
         }
     }
 
@@ -218,8 +234,7 @@ public class DataRepository {
                         flights.add(new Flight(id, plane, departureLocation, scaleLocation, arrivalLocation, departureDate, hoursDurationArrival, minutesDurationArrival, hoursDurationScale, minutesDurationScale));
                     } else {
                          System.err.println("Skipping flight " + id + " due to missing scale location reference: " + scaleLocationId);
-                         // Fallback to flight without scale or skip, depending on desired behavior
-                         // For now, creating without scale if scaleLocation is invalid but specified
+                         //Usamos un contrustor sin ScaleLocation
                          flights.add(new Flight(id, plane, departureLocation, arrivalLocation, departureDate, hoursDurationArrival, minutesDurationArrival));
                     }
                 } else {

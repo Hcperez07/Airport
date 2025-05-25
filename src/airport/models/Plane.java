@@ -62,8 +62,6 @@ public class Plane implements Cloneable{
     
     @Override
     public Plane clone() throws CloneNotSupportedException {
-        // Llamada a super.clone(), que realiza una copia superficial.
-        // Si tienes atributos que son objetos mutables, haz una copia profunda de ellos aquí.
         return (Plane) super.clone();
     }
     

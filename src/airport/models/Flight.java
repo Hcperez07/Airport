@@ -11,6 +11,7 @@ import java.util.ArrayList;
  *
  * @author edangulo
  */
+//Implementamos clonable para no afectar a los objetos originales haciendo clones
 public class Flight implements Cloneable{
     
     private final String id;

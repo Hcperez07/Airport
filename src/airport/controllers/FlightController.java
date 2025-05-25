@@ -26,30 +26,30 @@ public class FlightController {
                                  String departureHourStr, String departureMinuteStr, String durationArrivalHoursStr,
                                  String durationArrivalMinutesStr, String durationScaleHoursStr, String durationScaleMinutesStr) {
 
-        // Validate ID
-        if (id == null || id.trim().isEmpty()) { // Must not be null
+        // Validamos el ID
+        if (id == null || id.trim().isEmpty()) { 
              return new Response(Status.BAD_REQUEST, "Bad Request: Flight ID must follow the format XXXYYY (3 uppercase letters, 3 digits).", null);
         }
-        if (!id.matches("[A-Z]{3}[0-9]{3}")) {
+        if (!id.matches("[A-Z]{3}[0-9]{3}")) { //Aseguramos que el formato del ID sea correcto
             return new Response(Status.BAD_REQUEST, "Bad Request: Flight ID must follow the format XXXYYY (3 uppercase letters, 3 digits).", null);
         }
         if (dataRepository.findFlightById(id) != null) {
             return new Response(Status.CONFLICT, "Conflict: Flight ID already exists.", null);
         }
 
-        // Validate Plane
+        // Validamos el avion
         Plane plane = dataRepository.findPlaneById(planeId);
         if (plane == null) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Plane with ID '"+planeId+"' not found.", null);
         }
 
-        // Validate Departure Location
+        // Validamos la ubicacion del departamento
         Location departureLocation = dataRepository.findLocationById(departureLocationId);
         if (departureLocation == null) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Departure location with ID '"+departureLocationId+"' not found.", null);
         }
 
-        // Validate Arrival Location
+        // Validamos la ubicacion de aterrizaje
         Location arrivalLocation = dataRepository.findLocationById(arrivalLocationId);
         if (arrivalLocation == null) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Arrival location with ID '"+arrivalLocationId+"' not found.", null);
@@ -58,7 +58,7 @@ public class FlightController {
             return new Response(Status.BAD_REQUEST, "Bad Request: Departure and arrival locations cannot be the same.", null);
         }
         
-        // Parse Durations first as they are needed for scale logic too
+        // Parseamos la duracion del vuelo
         int durationArrivalHours, durationArrivalMinutes, durationScaleHours, durationScaleMinutes;
         try {
             if (durationArrivalHoursStr == null || "Hour".equals(durationArrivalHoursStr) || durationArrivalMinutesStr == null || "Minute".equals(durationArrivalMinutesStr)) {
@@ -68,8 +68,6 @@ public class FlightController {
             durationArrivalMinutes = Integer.parseInt(durationArrivalMinutesStr);
 
             if (durationScaleHoursStr == null || "Hour".equals(durationScaleHoursStr) || durationScaleMinutesStr == null || "Minute".equals(durationScaleMinutesStr)) {
-                 // This case might be valid if no scale location is selected, will be checked later.
-                 // For now, parse if not placeholder, default to 0 if placeholder and no scale.
                 durationScaleHours = "Hour".equals(durationScaleHoursStr) ? 0 : Integer.parseInt(durationScaleHoursStr);
                 durationScaleMinutes = "Minute".equals(durationScaleMinutesStr) ? 0 : Integer.parseInt(durationScaleMinutesStr);
             } else {
@@ -81,12 +79,12 @@ public class FlightController {
             return new Response(Status.BAD_REQUEST, "Bad Request: Invalid duration format.", null);
         }
 
-        // Validate Flight Duration (Arrival)
+        // Validamos la duracion del vuelo
         if (durationArrivalHours < 0 || durationArrivalMinutes < 0 || (durationArrivalHours == 0 && durationArrivalMinutes == 0)) {
             return new Response(Status.BAD_REQUEST, "Bad Request: Flight duration must be > 00:00.", null);
         }
         
-        // Validate Scale Location and its Duration
+        // Validanos el "scaleLocation" y su duracion
         Location scaleLocation = null;
         String actualScaleLocationId = null;
 
@@ -106,25 +104,22 @@ public class FlightController {
             if (durationScaleHours < 0 || durationScaleMinutes < 0 || (durationScaleHours == 0 && durationScaleMinutes == 0)) {
                 return new Response(Status.BAD_REQUEST, "Bad Request: Scale duration must be > 00:00 if scale location is provided.", null);
             }
-        } else { // No scale location provided or "No Scale" selected
+        } else { // En caso  de que no haya "scaleLocation" o se seleccionó "No Scale"
             if (durationScaleHours != 0 || durationScaleMinutes != 0) {
-                 // If placeholders were Hour/Minute and resulted in 0,0 this is fine for no scale.
-                 // This handles if user selected actual numbers for scale duration but "No Scale" for location.
                 boolean isScaleDurationHourPlaceholder = "Hour".equals(durationScaleHoursStr);
                 boolean isScaleDurationMinutePlaceholder = "Minute".equals(durationScaleMinutesStr);
                 if (!((isScaleDurationHourPlaceholder || durationScaleHours == 0) && (isScaleDurationMinutePlaceholder || durationScaleMinutes == 0))) {
                     return new Response(Status.BAD_REQUEST, "Bad Request: Scale duration must be 00:00 if no scale location is provided.", null);
                 }
-                 // Ensure parsed values are zero if placeholders were used for "No Scale"
                 if(isScaleDurationHourPlaceholder) durationScaleHours = 0;
                 if(isScaleDurationMinutePlaceholder) durationScaleMinutes = 0;
-                 if (durationScaleHours != 0 || durationScaleMinutes != 0) { // Re-check after placeholder normalization
+                 if (durationScaleHours != 0 || durationScaleMinutes != 0) { 
                     return new Response(Status.BAD_REQUEST, "Bad Request: Scale duration must be 00:00 if no scale location is provided.", null);
                 }
             }
         }
 
-        // Validate Departure Date/Time
+        // Validamos "departureDateTime"
         LocalDateTime departureDateTime;
         int departureYear, departureMonth, departureDay, departureHour, departureMinute;
         try {
@@ -184,6 +179,7 @@ public class FlightController {
             return new Response(Status.BAD_REQUEST, "Bad Request: Delay time must be > 00:00.", null);
         }
         flight.delay(delayHours, delayMinutes);
+        dataRepository.notifyObservers(); 
         try {
             return new Response(Status.OK, "Flight delayed successfully.", flight.clone());
         } catch (CloneNotSupportedException e) {
@@ -194,14 +190,16 @@ public class FlightController {
 
     public Response getAllFlightsOrderedByDepartureDate() {
         ArrayList<Flight> flights = dataRepository.getAllFlights();
+        // Ordena la lista "flights" en orden ascendente según la fecha de salida de cada vuelo, estoy metodos propios de las listas
         flights.sort(Comparator.comparing(Flight::getDepartureDate));
         ArrayList<Flight> clonedFlights = new ArrayList<>();
+        //Clonamos los datos para evitar dañar los originales
         for (Flight f : flights) {
             try {
                 clonedFlights.add((Flight) f.clone());
             } catch (CloneNotSupportedException e) {
                 System.err.println("Error cloning flight in getAllFlightsOrderedByDepartureDate: " + e.getMessage());
-                clonedFlights.add(f); // Add original if cloning fails
+                clonedFlights.add(f); // Hacemos add al original en caso de que no se pueda clonar
             }
         }
         return new Response(Status.OK, "Flights retrieved successfully.", clonedFlights);
@@ -213,7 +211,7 @@ public class FlightController {
             return new Response(Status.NOT_FOUND, "Passenger not found.", null);
         }
         ArrayList<Flight> passengerFlights = passenger.getFlights();
-        // Create a new list for sorting to avoid modifying the passenger's original list directly
+        // Creamos una lista para ordenar y no afectar la original
         ArrayList<Flight> flightsToSort = new ArrayList<>(passengerFlights);
         flightsToSort.sort(Comparator.comparing(Flight::getDepartureDate));
         
@@ -223,7 +221,7 @@ public class FlightController {
                 clonedFlights.add((Flight) f.clone());
             } catch (CloneNotSupportedException e) {
                 System.err.println("Error cloning flight in getFlightsForPassengerOrderedByDepartureDate: " + e.getMessage());
-                clonedFlights.add(f); // Add original if cloning fails
+                clonedFlights.add(f); 
             }
         }
         return new Response(Status.OK, "Passenger flights retrieved successfully.", clonedFlights);

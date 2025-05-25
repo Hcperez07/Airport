@@ -13,9 +13,7 @@ import airport.models.Flight;
 import airport.models.Location;
 import airport.models.Passenger;
 import airport.models.Plane;
-import airport.views.RoleTabPolicy;
-import airport.views.AdministratorTabPolicy;
-import airport.views.UserTabPolicy;
+import airport.models.DataRepository; 
 import java.awt.Color;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,39 +25,30 @@ import javax.swing.table.DefaultTableModel;
  *
  * @author edangulo
  */
-public class AirportFrame extends javax.swing.JFrame {
+public class AirportFrame extends javax.swing.JFrame implements Observer{
 
     /**
      * Creates new form AirportFrame
      */
     private int x, y;
-    // private ArrayList<Passenger> passengers; // Removed
-    // private ArrayList<Plane> planes; // Removed
-    // private ArrayList<Location> locations; // Removed
-    // private ArrayList<Flight> flights; // Removed
-
     private PassengerController passengerController;
     private PlaneController planeController;
     private LocationController locationController;
     private FlightController flightController;
-    
-    // Policies for tab visibility
     private RoleTabPolicy adminPolicy = new AdministratorTabPolicy();
     private RoleTabPolicy userPolicy = new UserTabPolicy();
 
     public AirportFrame() {
         initComponents();
 
-        // Initialize controllers
+        // Inicialamos los controladores
         this.passengerController = new PassengerController();
         this.planeController = new PlaneController();
         this.locationController = new LocationController();
         this.flightController = new FlightController();
 
-        // this.passengers = new ArrayList<>(); // Removed
-        // this.planes = new ArrayList<>(); // Removed
-        // this.locations = new ArrayList<>(); // Removed
-        // this.flights = new ArrayList<>(); // Removed
+        // Traemos al datarepository
+        DataRepository.getInstance().registerObserver(this);
         this.setBackground(new Color(0, 0, 0, 0));
         this.setLocationRelativeTo(null);
 
@@ -84,11 +73,12 @@ public class AirportFrame extends javax.swing.JFrame {
     }
 
     private void populateFlightsComboBox() {
-        addToFlightFlightComboBox.removeAllItems(); // For "Add to Flight" tab
+        addToFlightFlightComboBox.removeAllItems(); // Limpiamos
         addToFlightFlightComboBox.addItem("Flight");
-        delayFlightFlightIdComboBox.removeAllItems(); // For "Delay Flight" tab
-        delayFlightFlightIdComboBox.addItem("ID"); // Or "Flight ID" - current uses "ID"
+        delayFlightFlightIdComboBox.removeAllItems(); //Limpiamos
+        delayFlightFlightIdComboBox.addItem("ID");
 
+        //Rellenamos
         Response response = flightController.getAllFlightsOrderedByDepartureDate();
         if (response.getStatusCode() == 200) {
             ArrayList<Flight> flightsList = (ArrayList<Flight>) response.getData();
@@ -121,7 +111,7 @@ public class AirportFrame extends javax.swing.JFrame {
         flightArrivalLocationComboBox.removeAllItems();
         flightArrivalLocationComboBox.addItem("Location");
         flightScaleLocationComboBox.removeAllItems();
-        flightScaleLocationComboBox.addItem("No Scale"); // Added for optional scale
+        flightScaleLocationComboBox.addItem("No Scale");
         flightScaleLocationComboBox.addItem("Location");
 
         Response response = locationController.getAllLocationsOrderedById();
@@ -152,7 +142,6 @@ public class AirportFrame extends javax.swing.JFrame {
     }
 
     private void blockPanels() {
-        // Block all tabs initially except Administration (index 0)
         for (int i = 1; i < jTabbedPane1.getTabCount(); i++) {
             jTabbedPane1.setEnabledAt(i, false);
         }
@@ -1528,17 +1517,11 @@ public class AirportFrame extends javax.swing.JFrame {
         userSelect.setSelectedIndex(0);
     }
 
-    /**
-     * Manages tab access for the Administrator role using the AdministratorTabPolicy.
-     */
+
     private void manageAdminTabAccess() {
         adminPolicy.applyTabVisibility(jTabbedPane1, this);
     }
 
-    /**
-     * Refreshes data views relevant to the administrator.
-     * This includes refreshing tables for all passengers, flights, planes, and locations.
-     */
     private void refreshAdminViewData() {
         refreshAllPassengersButtonActionPerformed(null);
         refreshAllFlightsButtonActionPerformed(null);
@@ -1546,10 +1529,7 @@ public class AirportFrame extends javax.swing.JFrame {
         refreshAllLocationsButtonActionPerformed(null);
     }
 
-    /**
-     * Clears data fields that are specific to a user selection.
-     * This includes clearing the 'My Flights' table and the fields in the 'Update Info' tab.
-     */
+
     private void clearUserSpecificDataFields() {
         DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
         if (myFlightsModel != null) {
@@ -1560,7 +1540,7 @@ public class AirportFrame extends javax.swing.JFrame {
     
     private void administratorActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_administratorActionPerformed
         setAdminRoleUIState();
-        manageAdminTabAccess(); // This will be modified later for OCP
+        manageAdminTabAccess(); 
 
         if (evt != null) {
             refreshAdminViewData();
@@ -1570,9 +1550,7 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_administratorActionPerformed
 
     
-     /** Sets the UI state specific to the user role.
-     * This includes enabling the user selection combo box and ensuring the administrator radio button is deselected.
-     */
+
     private void setUserRoleUIState() {
         if (administrator.isSelected()) {
             administrator.setSelected(false);
@@ -1580,42 +1558,36 @@ public class AirportFrame extends javax.swing.JFrame {
         userSelect.setEnabled(true);
     }
 
-    /**
-     * Manages tab access for the User role using the UserTabPolicy.
-     */
+
     private void manageUserTabAccess() {
         userPolicy.applyTabVisibility(jTabbedPane1, this);
     }
 
-    /**
-     * Refreshes data views relevant to the user.
-     * This includes refreshing tables for all flights and locations.
-     */
+
     private void refreshUserViewData() {
         refreshAllFlightsButtonActionPerformed(null);
         refreshAllLocationsButtonActionPerformed(null);
+        refreshMyFlightsButtonActionPerformed(null);
     }
 
-    /**
-     * Handles changes in the user selection combo box.
-     * Populates or clears user-specific fields based on the selection.
-     */
+
     private void handleUserSelectionChange() {
-        if (userSelect.getSelectedIndex() > 0) {
-            userSelectActionPerformed(null); // This populates user-specific fields like updateInfoPassengerIdTextField and addToFlightPassengerIdTextField
-        } else {
-            // If "Select User" is chosen, or no user is selected, clear relevant fields.
-            DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
-            if (myFlightsModel != null) {
-                myFlightsModel.setRowCount(0); // Clear "My Flights" table
-            }
-            clearUpdateInfoFields(); // Clear fields in "Update Info" and "Add to Flight" passenger ID
+    if (userSelect.getSelectedIndex() > 0) {
+        userSelectActionPerformed(null); // Llenas los campos específicos del usuario 
+    } else {
+        // Si se presion User Select o no hay usuario seleccionado limpiamos los campos relevantes
+        DefaultTableModel myFlightsModel = (DefaultTableModel) myFlightsTable.getModel();
+        if (myFlightsModel != null) {
+            myFlightsModel.setRowCount(0); 
         }
+        clearUpdateInfoFields(); 
     }
+}
+
     
     private void userActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userActionPerformed
         setUserRoleUIState();
-        manageUserTabAccess(); // This will be modified later for OCP
+        manageUserTabAccess(); 
 
         if (evt != null) {
             handleUserSelectionChange();
@@ -1647,7 +1619,6 @@ public class AirportFrame extends javax.swing.JFrame {
             passengerPhoneCodeTextField.setText("");
             passengerPhoneNumberTextField.setText("");
             passengerCountryTextField.setText("");
-            // this.userSelect.addItem("" + id); // Commented out as per instruction
             populateUserSelectComboBox();
         } else {
             JOptionPane.showMessageDialog(this, "Error: " + response.getMessage(), "Registration Failed", JOptionPane.ERROR_MESSAGE);
@@ -1655,7 +1626,6 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_registerPassengerButtonActionPerformed
 
     private void clearUpdateInfoFields() {
-        updateInfoPassengerIdTextField.setText("");
         updateInfoFirstNameTextField.setText("");
         updateInfoLastNameTextField.setText("");
         updateInfoBirthYearTextField.setText("");
@@ -1664,7 +1634,7 @@ public class AirportFrame extends javax.swing.JFrame {
         updateInfoPhoneCodeTextField.setText("");
         updateInfoPhoneNumberTextField.setText("");
         updateInfoCountryTextField.setText("");
-        addToFlightPassengerIdTextField.setText(""); // Also clear ID in "Add to Flight"
+        addToFlightPassengerIdTextField.setText(""); 
     }
 
 
@@ -1752,6 +1722,7 @@ public class AirportFrame extends javax.swing.JFrame {
             flightDepartureMonthComboBox.setSelectedIndex(0);
             flightDepartureDayComboBox.setSelectedIndex(0);
             flightDepartureHourComboBox.setSelectedIndex(0);
+            flightArrivalDurationHourComboBox.setSelectedIndex(0);
             flightArrivalDurationMinuteComboBox.setSelectedIndex(0);
             flightScaleDurationHourComboBox.setSelectedIndex(0);
             flightDepartureMinuteComboBox.setSelectedIndex(0);
@@ -1781,6 +1752,7 @@ public class AirportFrame extends javax.swing.JFrame {
 
         if (response.getStatusCode() == 200) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
+            clearUpdateInfoFields();
         } else {
             JOptionPane.showMessageDialog(this, "Error: " + response.getMessage(), "Update Failed", JOptionPane.ERROR_MESSAGE);
         }
@@ -1809,8 +1781,6 @@ public class AirportFrame extends javax.swing.JFrame {
         String hoursStr = (String) delayFlightHoursComboBox.getSelectedItem();
         String minutesStr = (String) delayFlightMinutesComboBox.getSelectedItem();
 
-        // Validation moved to controller
-
         Response response = flightController.delayFlight(flightId, hoursStr, minutesStr);
 
         if (response.getStatusCode() == 200) {
@@ -1829,9 +1799,9 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_delayFlightButtonActionPerformed
 
     private void refreshMyFlightsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshMyFlightsButtonActionPerformed
-        if (userSelect.getSelectedIndex() <= 0 || userSelect.getSelectedItem().equals("Select User")) { // No user selected or default item
+        if (userSelect.getSelectedIndex() <= 0 || userSelect.getSelectedItem().equals("Select User")) { 
             DefaultTableModel model = (DefaultTableModel) myFlightsTable.getModel();
-            model.setRowCount(0); // Clear table
+            model.setRowCount(0); // Limpiamos
             return;
         }
         long passengerId = Long.parseLong(userSelect.getItemAt(userSelect.getSelectedIndex()));
@@ -1851,7 +1821,7 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_refreshMyFlightsButtonActionPerformed
 
     private void refreshAllPassengersButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshAllPassengersButtonActionPerformed
-        // TODO add your handling code here:
+
         DefaultTableModel model = (DefaultTableModel) allPassengersTable.getModel();
         model.setRowCount(0);
         Response response = passengerController.getAllPassengersOrderedById();
@@ -1866,7 +1836,7 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_refreshAllPassengersButtonActionPerformed
 
     private void refreshAllFlightsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshAllFlightsButtonActionPerformed
-        // TODO add your handling code here:
+
         DefaultTableModel model = (DefaultTableModel) allFlightsTable.getModel();
         model.setRowCount(0);
         Response response = flightController.getAllFlightsOrderedByDepartureDate();
@@ -1881,7 +1851,7 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_refreshAllFlightsButtonActionPerformed
 
     private void refreshAllPlanesButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshAllPlanesButtonActionPerformed
-        // TODO add your handling code here:
+
         DefaultTableModel model = (DefaultTableModel) allPlanesTable.getModel();
         model.setRowCount(0);
         Response response = planeController.getAllPlanesOrderedById();
@@ -1896,7 +1866,7 @@ public class AirportFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_refreshAllPlanesButtonActionPerformed
 
     private void refreshAllLocationsButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_refreshAllLocationsButtonActionPerformed
-        // TODO add your handling code here:
+
         DefaultTableModel model = (DefaultTableModel) allLocationsTable.getModel();
         model.setRowCount(0);
         Response response = locationController.getAllLocationsOrderedById();
@@ -1920,6 +1890,7 @@ public class AirportFrame extends javax.swing.JFrame {
             if (!id.equals(userSelect.getItemAt(0))) {
                 updateInfoPassengerIdTextField.setText(id);
                 addToFlightPassengerIdTextField.setText(id);
+                refreshUserViewData();
             } else {
                 updateInfoPassengerIdTextField.setText("");
                 addToFlightPassengerIdTextField.setText("");
@@ -1940,6 +1911,56 @@ public class AirportFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_updateInfoLastNameTextFieldActionPerformed
 
+
+    @Override
+    public void update() {
+    String selectedPassengerId = null;
+    if (user.isSelected() && userSelect.getSelectedIndex() > 0) {
+        Object selectedItem = userSelect.getSelectedItem();
+        if (selectedItem != null) {
+            selectedPassengerId = selectedItem.toString();
+        }
+    }
+    // Llamar a todos los metodos que llenan elementos de la interfaz o actualizan tablas
+    populateUserSelectComboBox();
+    // Restaurar usuario seleccionado si habia uno previamente
+    if (selectedPassengerId != null) {
+        for (int i = 0; i < userSelect.getItemCount(); i++) {
+            if (selectedPassengerId.equals(userSelect.getItemAt(i))) {
+                userSelect.setSelectedIndex(i);
+                break;
+            }
+        }
+    }
+    populatePlanesComboBox();
+    populateLocationsComboBoxes();
+    populateFlightsComboBox();
+    // Actualizar vistas de tablas
+    if (allPassengersTable != null && allPassengersTable.getModel() != null) {
+        refreshAllPassengersButtonActionPerformed(null);
+    }
+    if (allFlightsTable != null && allFlightsTable.getModel() != null) {
+        refreshAllFlightsButtonActionPerformed(null);
+    }
+    if (allPlanesTable != null && allPlanesTable.getModel() != null) {
+        refreshAllPlanesButtonActionPerformed(null);
+    }
+    if (allLocationsTable != null && allLocationsTable.getModel() != null) {
+        refreshAllLocationsButtonActionPerformed(null);
+    }
+    if (user.isSelected() && userSelect.getSelectedIndex() > 0) {
+        if (myFlightsTable != null && myFlightsTable.getModel() != null) {
+            refreshMyFlightsButtonActionPerformed(null);
+        }
+    } else if (user.isSelected() && userSelect.getSelectedIndex() <= 0) {
+        DefaultTableModel model = (DefaultTableModel) myFlightsTable.getModel();
+        if (model != null) {
+            model.setRowCount(0);
+        }
+    }
+}
+
+    
     /**
      * @param args the command line arguments
      */

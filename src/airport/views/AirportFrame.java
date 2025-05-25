@@ -9,6 +9,7 @@ import airport.controllers.LocationController;
 import airport.controllers.PassengerController;
 import airport.controllers.PlaneController;
 import airport.controllers.utils.Response;
+import airport.controllers.utils.Status;
 import airport.models.Flight;
 import airport.models.Location;
 import airport.models.Passenger;
@@ -80,7 +81,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         //Rellenamos
         Response response = flightController.getAllFlightsOrderedByDepartureDate();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Flight> flightsList = (ArrayList<Flight>) response.getData();
             for (Flight f : flightsList) {
                 addToFlightFlightComboBox.addItem(f.getId());
@@ -95,7 +96,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         flightPlaneComboBox.removeAllItems();
         flightPlaneComboBox.addItem("Plane");
         Response response = planeController.getAllPlanesOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Plane> planesList = (ArrayList<Plane>) response.getData();
             for (Plane p : planesList) {
                 flightPlaneComboBox.addItem(p.getId());
@@ -115,7 +116,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         flightScaleLocationComboBox.addItem("Location");
 
         Response response = locationController.getAllLocationsOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Location> locationsList = (ArrayList<Location>) response.getData();
             for (Location loc : locationsList) {
                 flightDepartureLocationComboBox.addItem(loc.getAirportId());
@@ -131,7 +132,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         userSelect.removeAllItems();
         userSelect.addItem("Select User");
         Response response = passengerController.getAllPassengersOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Passenger> passengersList = (ArrayList<Passenger>) response.getData();
             for (Passenger p : passengersList) {
                 userSelect.addItem(String.valueOf(p.getId()));
@@ -1608,7 +1609,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = passengerController.registerPassenger(idStr, firstname, lastname, yearStr, monthStr, dayStr, phoneCodeStr, phoneNumberStr, country);
 
-        if (response.getStatusCode() == 201) {
+        if (response.getStatusCode() == Status.CREATED) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             passengerIdTextField.setText("");
             passengerFirstNameTextField.setText("");
@@ -1633,8 +1634,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         updateInfoBirthDayComboBox.setSelectedIndex(0);
         updateInfoPhoneCodeTextField.setText("");
         updateInfoPhoneNumberTextField.setText("");
-        updateInfoCountryTextField.setText("");
-        addToFlightPassengerIdTextField.setText(""); 
+        updateInfoCountryTextField.setText(""); 
     }
 
 
@@ -1647,7 +1647,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = planeController.createPlane(id, brand, model, maxCapacityStr, airline);
 
-        if (response.getStatusCode() == 201) {
+        if (response.getStatusCode() == Status.CREATED) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             planeIdTextField.setText("");
             planeBrandTextField.setText("");
@@ -1671,7 +1671,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = locationController.createLocation(id, name, city, country, latitudeStr, longitudeStr);
 
-        if (response.getStatusCode() == 201) {
+        if (response.getStatusCode() == Status.CREATED) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             locationIdTextField.setText("");
             locationNameTextField.setText("");
@@ -1709,7 +1709,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
                 depYearStr, depMonthStr, depDayStr, depHourStr, depMinStr,
                 arrDurHoursStr, arrDurMinsStr, scaleDurHoursStr, scaleDurMinsStr);
 
-        if (response.getStatusCode() == 201) {
+        if (response.getStatusCode() == Status.CREATED) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             flightIdTextField.setText("");
             flightPlaneComboBox.setSelectedIndex(0);
@@ -1750,7 +1750,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = passengerController.updatePassengerInfo(id, firstname, lastname, yearStr, monthStr, dayStr, phoneCodeStr, phoneNumberStr, country);
 
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             clearUpdateInfoFields();
         } else {
@@ -1769,7 +1769,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = passengerController.addPassengerToFlight(passengerId, flightId);
 
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
         } else {
             JOptionPane.showMessageDialog(this, "Error: " + response.getMessage(), "Failed to Add Passenger to Flight", JOptionPane.ERROR_MESSAGE);
@@ -1783,7 +1783,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
 
         Response response = flightController.delayFlight(flightId, hoursStr, minutesStr);
 
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             JOptionPane.showMessageDialog(this, response.getMessage(), "Success", JOptionPane.INFORMATION_MESSAGE);
             delayFlightFlightIdComboBox.setSelectedIndex(0);
             delayFlightHoursComboBox.setSelectedIndex(0);
@@ -1810,7 +1810,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         DefaultTableModel model = (DefaultTableModel) myFlightsTable.getModel();
         model.setRowCount(0);
 
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Flight> flightsList = (ArrayList<Flight>) response.getData();
             for (Flight flight : flightsList) {
                 model.addRow(new Object[]{flight.getId(), flight.getDepartureDate().toString(), flight.calculateArrivalDate().toString()});
@@ -1825,7 +1825,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         DefaultTableModel model = (DefaultTableModel) allPassengersTable.getModel();
         model.setRowCount(0);
         Response response = passengerController.getAllPassengersOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Passenger> passengersList = (ArrayList<Passenger>) response.getData();
             for (Passenger passenger : passengersList) {
                 model.addRow(new Object[]{passenger.getId(), passenger.getFullname(), passenger.getBirthDate().toString(), passenger.calculateAge(), passenger.generateFullPhone(), passenger.getCountry(), passenger.getNumFlights()});
@@ -1840,7 +1840,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         DefaultTableModel model = (DefaultTableModel) allFlightsTable.getModel();
         model.setRowCount(0);
         Response response = flightController.getAllFlightsOrderedByDepartureDate();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Flight> flightsList = (ArrayList<Flight>) response.getData();
             for (Flight flight : flightsList) {
                 model.addRow(new Object[]{flight.getId(), flight.getDepartureLocation().getAirportId(), flight.getArrivalLocation().getAirportId(), (flight.getScaleLocation() == null ? "-" : flight.getScaleLocation().getAirportId()), flight.getDepartureDate().toString(), flight.calculateArrivalDate().toString(), flight.getPlane().getId(), flight.getNumPassengers()});
@@ -1855,7 +1855,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         DefaultTableModel model = (DefaultTableModel) allPlanesTable.getModel();
         model.setRowCount(0);
         Response response = planeController.getAllPlanesOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Plane> planesList = (ArrayList<Plane>) response.getData();
             for (Plane plane : planesList) {
                 model.addRow(new Object[]{plane.getId(), plane.getBrand(), plane.getModel(), plane.getMaxCapacity(), plane.getAirline(), plane.getNumFlights()});
@@ -1870,7 +1870,7 @@ public class AirportFrame extends javax.swing.JFrame implements Observer{
         DefaultTableModel model = (DefaultTableModel) allLocationsTable.getModel();
         model.setRowCount(0);
         Response response = locationController.getAllLocationsOrderedById();
-        if (response.getStatusCode() == 200) {
+        if (response.getStatusCode() == Status.OK) {
             ArrayList<Location> locationsList = (ArrayList<Location>) response.getData();
             for (Location location : locationsList) {
                 model.addRow(new Object[]{location.getAirportId(), location.getAirportName(), location.getAirportCity(), location.getAirportCountry()});
